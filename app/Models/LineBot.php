@@ -9,6 +9,8 @@ class LineBot extends Model
 {
     use HasFactory;
 
+    protected $guarded = [];
+
     // bot has many messages
     public function messages()
     {
