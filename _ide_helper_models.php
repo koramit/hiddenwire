@@ -15,13 +15,17 @@ namespace App\Models{
  * App\Models\Attachment
  *
  * @property int $id
+ * @property string $path
+ * @property string $filename
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @method static \Illuminate\Database\Eloquent\Builder|Attachment newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Attachment newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Attachment query()
  * @method static \Illuminate\Database\Eloquent\Builder|Attachment whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Attachment whereFilename($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Attachment whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Attachment wherePath($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Attachment whereUpdatedAt($value)
  */
 	class Attachment extends \Eloquent {}
@@ -60,11 +64,32 @@ namespace App\Models{
 
 namespace App\Models{
 /**
+ * App\Models\LineGroup
+ *
+ * @property int $id
+ * @property string $line_group_id
+ * @property string|null $name
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @method static \Illuminate\Database\Eloquent\Builder|LineGroup newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|LineGroup newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|LineGroup query()
+ * @method static \Illuminate\Database\Eloquent\Builder|LineGroup whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LineGroup whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LineGroup whereLineGroupId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LineGroup whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LineGroup whereUpdatedAt($value)
+ */
+	class LineGroup extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
  * App\Models\LineMessage
  *
  * @property int $id
  * @property int $line_bot_id
- * @property mixed $payload
+ * @property \Illuminate\Database\Eloquent\Casts\AsArrayObject $payload
  * @property bool $processed
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -80,6 +105,35 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|LineMessage whereUpdatedAt($value)
  */
 	class LineMessage extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
+ * App\Models\SimplifiedEvent
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property int $line_message_id
+ * @property int|null $line_group_id
+ * @property string|null $message
+ * @property string $type
+ * @property int|null $attachment_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent query()
+ * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent whereAttachmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent whereLineGroupId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent whereLineMessageId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent whereMessage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent whereUserId($value)
+ */
+	class SimplifiedEvent extends \Eloquent {}
 }
 
 namespace App\Models{
@@ -116,34 +170,5 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|User whereUpdatedAt($value)
  */
 	class User extends \Eloquent {}
-}
-
-namespace App\Models{
-/**
- * App\Models\UserMessage
- *
- * @property int $id
- * @property int $user_id
- * @property int $line_bot_id
- * @property int $line_message_id
- * @property string|null $message
- * @property string $type
- * @property int|null $attachment_id
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @method static \Illuminate\Database\Eloquent\Builder|UserMessage newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|UserMessage newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|UserMessage query()
- * @method static \Illuminate\Database\Eloquent\Builder|UserMessage whereAttachmentId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|UserMessage whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|UserMessage whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|UserMessage whereLineBotId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|UserMessage whereLineMessageId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|UserMessage whereMessage($value)
- * @method static \Illuminate\Database\Eloquent\Builder|UserMessage whereType($value)
- * @method static \Illuminate\Database\Eloquent\Builder|UserMessage whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|UserMessage whereUserId($value)
- */
-	class UserMessage extends \Eloquent {}
 }
 

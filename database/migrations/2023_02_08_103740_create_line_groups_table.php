@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('line_groups', function (Blueprint $table) {
             $table->id();
             $table->string('line_group_id', 36)->unique();
-            $table->string('name')->default('untitled');
+            $table->string('name')->nullable();
             $table->timestamps();
         });
     }

@@ -19,6 +19,6 @@ class LineMessage extends Model
     // message belongs to bot
     public function bot()
     {
-        return $this->belongsTo(LineBot::class);
+        return $this->belongsTo(LineBot::class, 'line_bot_id', 'id');
     }
 }

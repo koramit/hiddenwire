@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\Attachment;
-use App\Models\LineBot;
 use App\Models\LineGroup;
 use App\Models\LineMessage;
 use App\Models\SimplifiedEvent;
@@ -29,7 +28,6 @@ class ProcessMessageEvents extends Command
      */
     protected $description = 'Process message events';
 
-
     /**
      * Execute the console command.
      *
@@ -46,7 +44,7 @@ class ProcessMessageEvents extends Command
             return Command::SUCCESS;
         }
 
-        $messages->each(fn($message) => $this->process($message));
+        $messages->each(fn ($message) => $this->process($message));
 
         return Command::SUCCESS;
     }
@@ -68,10 +66,7 @@ class ProcessMessageEvents extends Command
     {
         $group = null;
         if ($event['source']['type'] === 'group') {
-            $group = LineGroup::query()
-                ->firstOrCreate(
-                    ['line_group_id' => $event['source']['groupId']],
-                );
+            $group = $this->getLineGroup($event['source']['groupId'], $message->bot->channel_access_token);
         }
 
         $profile = Http::withToken($message->bot->channel_access_token)
@@ -101,13 +96,13 @@ class ProcessMessageEvents extends Command
                     'type' => 'text',
                     'message' => $event['message']['text'],
                 ]);
-        } elseif (in_array($event['message']['type'], ['image', 'video', 'file'])) {
+        } elseif (in_array($event['message']['type'], ['image', 'video', 'file', 'audio'])) {
             $attachment = $this->putContent($event, $message->bot->channel_access_token);
             SimplifiedEvent::query()
                 ->create($common + [
-                        'type' => $event['message']['type'],
-                        'attachment_id' => $attachment->id,
-                    ]);
+                    'type' => $event['message']['type'],
+                    'attachment_id' => $attachment->id,
+                ]);
         }
     }
 
@@ -119,18 +114,40 @@ class ProcessMessageEvents extends Command
         if ($event['message']['type'] === 'file') {
             $filename = $event['message']['fileName'];
         } else {
-            $filename = $event['message']['id'] . '.' . [
-                    'image/jpeg' => 'jpg',
-                    'video/mp4' => 'mp4',
-                ][$response->headers()['Content-type']];
+            $filename = $event['message']['id'].'.'.[
+                'image/jpeg' => 'jpg',
+                'video/mp4' => 'mp4',
+                'audio/x-m4a' => 'm4a',
+            ][$response->headers()['Content-Type'][0]];
         }
 
-        $path = Storage::put('line/content/' . $filename, $response->body());
+        $path = Storage::put('line/content/'.$filename, $response->body());
 
         return Attachment::query()
             ->create([
                 'path' => $path,
                 'filename' => $filename,
             ]);
+    }
+
+    protected function getLineGroup(string $lineGroupId, string $token): LineGroup
+    {
+        /** @var LineGroup $lineGroup */
+        $lineGroup = LineGroup::query()
+            ->firstOrNew(
+                ['line_group_id' => $lineGroupId],
+            );
+
+        if ($lineGroup->exists) {
+            return $lineGroup;
+        }
+
+        // call LINE api to get group info
+        $response = Http::withToken($token)
+            ->get("https://api.line.me/v2/bot/group/$lineGroupId/summary");
+        $lineGroup->name = $response->json()['groupName'] ?? null;
+        $lineGroup->save();
+
+        return $lineGroup;
     }
 }
