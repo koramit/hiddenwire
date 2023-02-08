@@ -13,7 +13,7 @@ class LineMessage extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'message' => AsArrayObject::class,
+        'payload' => AsArrayObject::class,
     ];
 
     // message belongs to bot
