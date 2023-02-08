@@ -13,11 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('user_messages', function (Blueprint $table) {
+        Schema::create('simplified_events', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(\App\Models\User::class);
-            $table->foreignIdFor(\App\Models\LineBot::class);
             $table->foreignIdFor(\App\Models\LineMessage::class);
+            $table->foreignIdFor(\App\Models\LineGroup::class)->nullable();
             $table->text('message')->nullable();
             $table->string('type', 16);
             $table->foreignIdFor(\App\Models\Attachment::class)->nullable();
@@ -32,6 +32,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_messages');
+        Schema::dropIfExists('simplified_events');
     }
 };

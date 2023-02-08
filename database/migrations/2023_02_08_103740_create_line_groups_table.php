@@ -13,10 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('attachments', function (Blueprint $table) {
+        Schema::create('line_groups', function (Blueprint $table) {
             $table->id();
-            $table->string('path');
-            $table->string('filename');
+            $table->string('line_group_id', 36)->unique();
+            $table->string('name')->default('untitled');
             $table->timestamps();
         });
     }
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('attachments');
+        Schema::dropIfExists('line_groups');
     }
 };
