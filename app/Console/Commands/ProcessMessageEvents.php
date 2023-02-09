@@ -7,9 +7,11 @@ use App\Models\LineGroup;
 use App\Models\LineMessage;
 use App\Models\SimplifiedEvent;
 use App\Models\User;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class ProcessMessageEvents extends Command
@@ -33,7 +35,7 @@ class ProcessMessageEvents extends Command
      *
      * @return int
      */
-    public function handle()
+    public function handle(): int
     {
         $messages = LineMessage::query()
             ->with('bot:id,channel_access_token')
@@ -41,53 +43,75 @@ class ProcessMessageEvents extends Command
             ->get();
 
         if ($messages->isEmpty()) {
-            return Command::SUCCESS;
+            return static::SUCCESS;
         }
 
         $messages->each(fn ($message) => $this->process($message));
 
-        return Command::SUCCESS;
+        return static::SUCCESS;
     }
 
-    protected function process(LineMessage $message)
+    protected function process(LineMessage $message): int
     {
         foreach ($message->payload['events'] as $event) {
             if ($event['type'] !== 'message') {
                 continue;
             }
-            $this->handleMessage($event, $message);
+            if(!$this->handleMessage($event, $message)) {
+                return static::FAILURE;
+            }
         }
 
         $message->processed = true;
         $message->save();
+
+        return static::SUCCESS;
     }
 
-    protected function handleMessage(array &$event, LineMessage $message)
+    protected function handleMessage(array &$event, LineMessage $message): bool
     {
-        $group = null;
-        if ($event['source']['type'] === 'group') {
-            $group = $this->getLineGroup($event['source']['groupId'], $message->bot->channel_access_token);
+        if (SimplifiedEvent::query()->find($event['message']['id'])) {
+            return true;
         }
 
-        $profile = Http::withToken($message->bot->channel_access_token)
-            ->get("https://api.line.me/v2/bot/profile/{$event['source']['userId']}")
-            ->json();
+        $group = null;
+        if ($event['source']['type'] === 'group') {
+            if(!$group = $this->getLineGroup($event['source']['groupId'], $message->bot->channel_access_token)) {
+                return false;
+            }
+        }
 
-        $user = User::query()
-            ->firstOrCreate(
-                ['line_user_id' => $event['source']['userId']],
-                [
-                    'name' => $profile['displayName'],
-                    'avatar_url' => $profile['pictureUrl'],
-                    'status' => $profile['statusMessage'] ?? null,
-                    'password' => Hash::make($event['source']['userId']),
-                ]
-            );
+        if (!$user = User::query()->where('line_user_id', $event['source']['userId'])->first()) {
+            try {
+                $profile = Http::retry(3, 100)
+                    ->timeout(4)
+                    ->withToken($message->bot->channel_access_token)
+                    ->get("https://api.line.me/v2/bot/profile/{$event['source']['userId']}")
+                    ->json();
+            } catch (Exception $e) {
+                Log::error('LINEAPI@getProfile '.$e->getMessage());
+
+                return false;
+            }
+
+            $user = User::query()
+                ->firstOrCreate(
+                    ['line_user_id' => $event['source']['userId']],
+                    [
+                        'name' => $profile['displayName'],
+                        'avatar_url' => $profile['pictureUrl'],
+                        'status' => $profile['statusMessage'] ?? null,
+                        'password' => Hash::make($event['source']['userId']),
+                    ]
+                );
+        }
 
         $common = [
+            'id' => $event['message']['id'],
             'user_id' => $user->id,
             'line_group_id' => $group?->id,
             'line_message_id' => $message->id,
+            'timestamp' => $event['timestamp'],
         ];
 
         if ($event['message']['type'] === 'text') {
@@ -96,20 +120,39 @@ class ProcessMessageEvents extends Command
                     'type' => 'text',
                     'message' => $event['message']['text'],
                 ]);
-        } elseif (in_array($event['message']['type'], ['image', 'video', 'file', 'audio'])) {
-            $attachment = $this->putContent($event, $message->bot->channel_access_token);
-            SimplifiedEvent::query()
-                ->create($common + [
+
+            return true;
+        }
+
+        if (!in_array($event['message']['type'], ['image', 'video', 'file', 'audio'])) {
+            return true;
+        }
+
+        if(!$attachment = $this->putContent($event, $message->bot->channel_access_token)) {
+            return false;
+        }
+
+        SimplifiedEvent::query()
+            ->create($common + [
                     'type' => $event['message']['type'],
                     'attachment_id' => $attachment->id,
                 ]);
-        }
+
+        return true;
     }
 
-    protected function putContent(array &$event, string $token)
+    protected function putContent(array $event, string $token): ?Attachment
     {
-        $response = Http::withToken($token)
-            ->get("https://api-data.line.me/v2/bot/message/{$event['message']['id']}/content");
+        try {
+            $response = Http::timeout(4)
+                ->retry(3, 100)
+                ->withToken($token)
+                ->get("https://api-data.line.me/v2/bot/message/{$event['message']['id']}/content");
+        } catch (Exception $e) {
+            Log::error('LINEAPI@getContent '.$e->getMessage());
+
+            return null;
+        }
 
         if ($event['message']['type'] === 'file') {
             $filename = $event['message']['fileName'];
@@ -130,7 +173,7 @@ class ProcessMessageEvents extends Command
             ]);
     }
 
-    protected function getLineGroup(string $lineGroupId, string $token): LineGroup
+    protected function getLineGroup(string $lineGroupId, string $token): ?LineGroup
     {
         /** @var LineGroup $lineGroup */
         $lineGroup = LineGroup::query()
@@ -143,8 +186,16 @@ class ProcessMessageEvents extends Command
         }
 
         // call LINE api to get group info
-        $response = Http::withToken($token)
-            ->get("https://api.line.me/v2/bot/group/$lineGroupId/summary");
+        try {
+            $response = Http::timeout(4)
+                ->retry(3, 100)
+                ->withToken($token)
+                ->get("https://api.line.me/v2/bot/group/$lineGroupId/summary");
+        } catch (Exception $e) {
+            Log::error('LINEAPI@getGroup '.$e->getMessage());
+
+            return null;
+        }
         $lineGroup->name = $response->json()['groupName'] ?? null;
         $lineGroup->save();
 
