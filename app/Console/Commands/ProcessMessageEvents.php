@@ -89,9 +89,16 @@ class ProcessMessageEvents extends Command
                     ->get("https://api.line.me/v2/bot/profile/{$event['source']['userId']}")
                     ->json();
             } catch (Exception $e) {
-                Log::error('LINEAPI@getProfile '.$e->getMessage());
+                if ($e->getCode() !== 404) {
+                    Log::error('LINEAPI@getProfile ' . $e->getMessage());
 
-                return false;
+                    return false;
+                }
+
+                $profile = [
+                    'displayName' => 'not a friend',
+                    'pictureUrl' => null,
+                ];
             }
 
             $user = User::query()
