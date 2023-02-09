@@ -135,7 +135,7 @@ class ProcessMessageEvents extends Command
         SimplifiedEvent::query()
             ->create($common + [
                     'type' => $event['message']['type'],
-                    'attachment_id' => $attachment->id,
+                    'attachment_id' => $attachment->id ?? null,
                 ]);
 
         return true;
@@ -149,6 +149,10 @@ class ProcessMessageEvents extends Command
                 ->withToken($token)
                 ->get("https://api-data.line.me/v2/bot/message/{$event['message']['id']}/content");
         } catch (Exception $e) {
+            if ($e->getCode() === 400) {
+                return new Attachment();
+            }
+
             Log::error('LINEAPI@getContent '.$e->getMessage());
 
             return null;
@@ -164,7 +168,9 @@ class ProcessMessageEvents extends Command
             ][$response->headers()['Content-Type'][0]];
         }
 
-        $path = Storage::put('line/content/'.$filename, $response->body());
+        $path = 'l/c/'.$filename;
+
+        Storage::put($path, $response->body());
 
         return Attachment::query()
             ->create([
