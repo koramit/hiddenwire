@@ -57,7 +57,7 @@ class ProcessMessageEvents extends Command
             if ($event['type'] !== 'message') {
                 continue;
             }
-            if(!$this->handleMessage($event, $message)) {
+            if (! $this->handleMessage($event, $message)) {
                 return static::FAILURE;
             }
         }
@@ -76,12 +76,12 @@ class ProcessMessageEvents extends Command
 
         $group = null;
         if ($event['source']['type'] === 'group') {
-            if(!$group = $this->getLineGroup($event['source']['groupId'], $message->bot->channel_access_token)) {
+            if (! $group = $this->getLineGroup($event['source']['groupId'], $message->bot->channel_access_token)) {
                 return false;
             }
         }
 
-        if (!$user = User::query()->where('line_user_id', $event['source']['userId'])->first()) {
+        if (! $user = User::query()->where('line_user_id', $event['source']['userId'])->first()) {
             try {
                 $profile = Http::retry(3, 100)
                     ->timeout(4)
@@ -90,7 +90,7 @@ class ProcessMessageEvents extends Command
                     ->json();
             } catch (Exception $e) {
                 if ($e->getCode() !== 404) {
-                    Log::error('LINEAPI@getProfile ' . $e->getMessage());
+                    Log::error('LINEAPI@getProfile '.$e->getMessage());
 
                     return false;
                 }
@@ -131,19 +131,19 @@ class ProcessMessageEvents extends Command
             return true;
         }
 
-        if (!in_array($event['message']['type'], ['image', 'video', 'file', 'audio'])) {
+        if (! in_array($event['message']['type'], ['image', 'video', 'file', 'audio'])) {
             return true;
         }
 
-        if(!$attachment = $this->putContent($event, $message->bot->channel_access_token)) {
+        if (! $attachment = $this->putContent($event, $message->bot->channel_access_token)) {
             return false;
         }
 
         SimplifiedEvent::query()
             ->create($common + [
-                    'type' => $event['message']['type'],
-                    'attachment_id' => $attachment->id ?? null,
-                ]);
+                'type' => $event['message']['type'],
+                'attachment_id' => $attachment->id ?? null,
+            ]);
 
         return true;
     }

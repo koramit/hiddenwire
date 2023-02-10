@@ -17,7 +17,9 @@ class SimplifiedEvent extends Model
     {
         return Attribute::make(
             get: fn ($value) => Carbon::create($value),
-            set: fn ($value) => Carbon::createFromTimestamp($value/1000),
+            set: fn ($value) => gettype($value) === 'integer'
+                ? Carbon::createFromTimestamp($value / 1000)
+                : $value,
         );
     }
 
@@ -32,6 +34,4 @@ class SimplifiedEvent extends Model
     {
         return $this->belongsTo(LineGroup::class, 'line_group_id', 'id');
     }
-
-
 }

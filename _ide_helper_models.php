@@ -120,6 +120,8 @@ namespace App\Models{
  * @property int|null $attachment_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\LineGroup|null $group
+ * @property-read \App\Models\User|null $user
  * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|SimplifiedEvent query()
