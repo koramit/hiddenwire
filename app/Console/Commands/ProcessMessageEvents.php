@@ -151,8 +151,7 @@ class ProcessMessageEvents extends Command
     protected function putContent(array $event, string $token): ?Attachment
     {
         try {
-            $response = Http::timeout(4)
-                ->retry(3, 100)
+            $response = Http::retry(3, 100)
                 ->withToken($token)
                 ->get("https://api-data.line.me/v2/bot/message/{$event['message']['id']}/content");
         } catch (Exception $e) {

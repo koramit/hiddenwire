@@ -20,4 +20,18 @@ class SimplifiedEvent extends Model
             set: fn ($value) => Carbon::createFromTimestamp($value/1000),
         );
     }
+
+    // event belongs to a user
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // event belongs to a line group.
+    public function group()
+    {
+        return $this->belongsTo(LineGroup::class, 'line_group_id', 'id');
+    }
+
+
 }
