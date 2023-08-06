@@ -176,7 +176,7 @@ class ProcessMessageEvents extends Command
 
         $path = 'l/c/'.$filename;
 
-        Storage::put($path, $response->body());
+        Storage::put(preg_replace('/\.+/', '.', $path), $response->body());
 
         return Attachment::query()
             ->create([
