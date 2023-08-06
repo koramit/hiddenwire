@@ -176,8 +176,11 @@ class ProcessMessageEvents extends Command
 
         $path = 'l/c/'.$filename;
 
-        Storage::put(preg_replace('/\.+/', '.', $path), $response->body());
-
+        try {
+            Storage::put($path, $response->body());
+        } catch (Exception $e) {
+            Log::error("https://api-data.line.me/v2/bot/message/{$event['message']['id']}/content");
+        }
         return Attachment::query()
             ->create([
                 'path' => $path,
