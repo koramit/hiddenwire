@@ -179,7 +179,7 @@ class ProcessMessageEvents extends Command
         try {
             Storage::put($path, $response->body());
         } catch (Exception $e) {
-            Log::error("https://api-data.line.me/v2/bot/message/{$event['message']['id']}/content");
+            Log::error("unsupported characters in filename : https://api-data.line.me/v2/bot/message/{$event['message']['id']}/content");
         }
         return Attachment::query()
             ->create([
