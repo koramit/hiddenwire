@@ -162,6 +162,10 @@ class ProcessMessageEvents extends Command
 
             Log::error('LINEAPI@getContent '.$e->getMessage());
 
+            if ($e->getCode() === 410) {
+                return new Attachment();
+            }
+
             return null;
         }
 
