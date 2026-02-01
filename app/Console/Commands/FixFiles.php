@@ -41,6 +41,7 @@ class FixFiles extends Command
                 }
 
                 $to = 'l/c/' . $attachment->created_at->tz('Asia/Bangkok')->format('y/m/d') . '/' . $filename;
+                Storage::move($file, $to);
                 $this->line("$file -> $to");
             }
         }
