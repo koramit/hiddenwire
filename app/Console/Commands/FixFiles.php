@@ -31,7 +31,10 @@ class FixFiles extends Command
         foreach ($paths as $path) {
             $files = Storage::allFiles($path);
             foreach ($files as $file) {
-                $filename = pathinfo($file, PATHINFO_FILENAME);
+                $filename = implode('.', [
+                    pathinfo($file, PATHINFO_FILENAME),
+                    pathinfo($file, PATHINFO_EXTENSION)
+                ]);
                 $this->line("$filename");
                 $attachment = Attachment::query()->where('filename', $filename)->first();
                 if (!$attachment) {
