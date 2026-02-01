@@ -179,7 +179,7 @@ class ProcessMessageEvents extends Command
             ][$response->headers()['Content-Type'][0]];
         }
 
-        $path = 'l/c/'.$filename;
+        $path = 'l/c/'.now()->tz('Asia/Bangkok')->format('y/m/d/').$filename;
 
         try {
             Storage::put($path, $response->body());
