@@ -35,14 +35,13 @@ class FixFiles extends Command
                     pathinfo($file, PATHINFO_FILENAME),
                     pathinfo($file, PATHINFO_EXTENSION)
                 ]);
-                $this->line("$filename");
                 $attachment = Attachment::query()->where('filename', $filename)->first();
                 if (!$attachment) {
                     continue;
                 }
 
                 $to = 'l/c/' . $attachment->created_at->tz('Asia/Bangkok')->format('y/m/d') . '/' . $filename;
-                $this->line("$file -> $filename");
+                $this->line("$file -> $to");
             }
         }
     }
